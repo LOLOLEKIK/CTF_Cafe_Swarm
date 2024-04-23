@@ -1,0 +1,79 @@
+# TO WORK ON A VPS:
+# CHANGE FRONTEND_URI and BACKEND_URI to http://vps_ip:port
+# FOR HTTPS CHANGE TO https://domain.com/ AND SETUP NGINX FOR ROUTING
+
+version: '3.1'
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: dbuser
+      MONGO_INITDB_ROOT_PASSWORD: changeme
+    volumes: 
+      - ~/mongo/data:/data/db
+
+  backend:
+    build: ./backEnd/
+    restart: always
+    ports: 
+      - '3001:3001'
+    environment:
+      # DB 
+      - SESSION_SECRET=CHANGEME
+      - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
+
+      # Routing
+      - FRONTEND_URI=http://localhost:3000
+
+      # Mail Verification
+      - MAIL_VERIFICATION=false
+      - BACKEND_URI=<backend url same as frontend unless testing locally, will then be port 3001>
+      - HOST=<mail server>
+      - MAIL_PORT=<mail server port>
+      - MAIL=<mail address to send emails>
+      - PASS=<mail password to send emails>
+
+      # Docker API
+      - DEPLOYER_API=/var/run/docker.sock
+      - DEPLOYER_SECRET=<deployer secret token>
+
+      # Config 
+      - NODE_ENV=development
+      - PORT=3001
+
+      # First Blood Webhook
+      - WEBHOOK=<discord webhook url>
+    volumes:
+      - ./backEnd/assets:/server/assets
+    depends_on:
+      - mongo
+
+  frontend:
+    build: ./frontEnd/
+    restart: always
+    ports: 
+      - '3000:3000'
+    environment:
+      - REACT_APP_BACKEND_URI=http://localhost:3001
+      - REACT_APP_CTF_NAME=TEST_CTF
+      - GENERATE_SOURCEMAP=false
+
+  dockerapi:
+    build: ./dockerAPI
+    restart: always
+    user: "root"
+    environment:
+      - SECRET_TOKEN=s3cret4HackyNovFlagGvhcbezha
+      - BACKEND_URI=http://localhost:3001/
+      - DOCKER_URI=http://localhost:3002/
+      - RANDOM_FLAG_FORMAT="HNx03{RAND}"
+      - INSWARM=true
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - '3002:3002'
+    depends_on:
+      - backend
