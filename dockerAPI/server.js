@@ -24,6 +24,7 @@ app.use(bodyparser.json());
 
 // Add headers before the routes are defined
 app.use(function (req, res, next) {
+  console.log("ici")
   // Website you wish to allow to connect
   res.setHeader("Access-Control-Allow-Origin", process.env.BACKEND_URI);
 
@@ -42,22 +43,28 @@ app.use(function (req, res, next) {
   // Set to true if you need the website to include cookies in the requests sent
   // to the API (e.g. in case you use sessions)
   res.setHeader("Access-Control-Allow-Credentials", true);
+  console.log("end")
 
   // Pass to next layer of middleware
   next();
 });
 
 function apiKeyCheck(req, res, next) {
+  console.log(req.get("X-API-KEY"))
   if (req.get("X-API-KEY") == process.env.SECRET_TOKEN) {
     next();
+    // print url and body
+    console.log(req.url)
+    console.log("API Key is correct");
+    console.log(req.body)
   } else {
     res.send({ state: "Unauthorized!" });
   }
 }
 
-app.use(apiKeyCheck);
-
+// console.log("ici")
 app.use("/api", apiRouter);
+app.use(apiKeyCheck);
 
 process.on("uncaughtException", function (err) {
   console.log("Uncaught exception: " + err.stack);

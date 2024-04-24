@@ -7,6 +7,10 @@ const simpleGit = require("simple-git");
 const crypto = require("crypto");
 const { fromUrl } = require("hosted-git-info");
 require("dotenv").config();
+const util = require('util');
+const exec = require('child_process').exec;
+
+const execAsync = util.promisify(exec);
 
 const progress = new Map();
 
@@ -17,6 +21,9 @@ cron.schedule("* * * * *", () => {
     .then(async (allDockers) => {
       allDockers.forEach(async (docker) => {
         if (Date.now() - docker.deployTime >= 1000 * 60 * 60 * 2) {
+          if (process.env.INSWARM == "true") {
+            await stopAndRemoveStack(docker.dockerId);
+          } else {
           // stop docker
           await compose.stop({
             cwd: docker.path,
@@ -26,6 +33,7 @@ cron.schedule("* * * * *", () => {
             cwd: docker.path,
             composeOptions: [["-p", docker.dockerId]],
           });
+        }
           await dockers.findByIdAndDelete(docker._id);
         }
       });
@@ -57,7 +65,7 @@ async function deployDockerSwarm(dockerPath, stackName) {
 
     // Deploy to Docker Swarm
     const { stdout, stderr } = await execAsync(
-      `docker stack deploy -c ${dockerPath}/docker-compose.yml ${stackName}`,
+      `docker stack deploy -c ${dockerPath}/docker-compose.yml ${stackName} --with-registry-auth`,
       { env: process.env }
     );
     console.log('stdout:', stdout);
@@ -72,7 +80,7 @@ async function deployDockerSwarm(dockerPath, stackName) {
 
 async function getServiceTasks(stackName) {
   try {
-    const { stdout, stderr } = await execAsync(`docker service ps --format "{{.Name}} {{.Node}} {{.CurrentState}} {{.Ports}}" ${stackName}`);
+    const { stdout, stderr } = await execAsync(`docker service ls --format "{{.ID}} {{.Name}} {{.Mode}} {{.Replicas}} {{.Image}} {{.Ports}}" | grep ${stackName}`);
     console.log('stdout:', stdout);
     if (stderr) {
       console.error('stderr:', stderr);
@@ -83,10 +91,12 @@ async function getServiceTasks(stackName) {
     return stdout.split('\n').filter(line => line !== '').map(line => {
       const parts = line.split(' ');
       return {
-        name: parts[0],
-        node: parts[1],
-        state: parts[2],
-        ports: parts.slice(3).join(' ') // Handling port part because it may contain spaces
+        id: parts[0],
+        name: parts[1],
+        mode: parts[2],
+        replicas: parts[3],
+        image: parts[4],
+        ports: parts[5]
       };
     });
   } catch (error) {
@@ -148,6 +158,7 @@ async function checkDockerExists(githubUrl) {
 }
 
 exports.deployDocker = async function (req, res) {
+  console.log("deploy docker")
   const ownerId = req.body.ownerId;
   const challengeId = req.body.challengeId;
 
@@ -226,6 +237,7 @@ exports.deployDocker = async function (req, res) {
     
     if (process.env.INSWARM == "true") {
       containers = await getServiceTasks(challengeId + "_" + ownerId);
+      // containers = await getServiceTasks(challengeId + "_" + ownerId);
     } else {
       containers = await compose.ps({
         cwd: dockerPath,
@@ -237,6 +249,20 @@ exports.deployDocker = async function (req, res) {
     let i = 0;
     try {
       let port = "none";
+      console.log("eeee")
+
+      console.log("eeee")
+      if (process.env.INSWARM == "true") {
+        while(containers[i] && containers[i].ports.length == 0) {
+          i += 1;
+        }
+        if (containers[i]) {
+          port = containers[i].ports.split(":")[1].split("->")[0];
+        } else {
+          port = "none";
+        }
+      }
+      else {
 
       while (
         containers.data.services[i] &&
@@ -250,9 +276,9 @@ exports.deployDocker = async function (req, res) {
       if (containers.data.services[i]) {
         port = containers.data.services[i].ports[0].mapped.port;
       } else {
-        port = containers.out.split("0.0.0.0:")[1].split("->")[0];
+          port = containers.out.split("0.0.0.0:")[1].split("->")[0];
       }
-
+    }
       await dockers.create({
         dockerId: challengeId + "_" + ownerId,
         challengeId: challengeId,
@@ -306,6 +332,7 @@ exports.deployDocker = async function (req, res) {
 };
 
 exports.shutdownDocker = async function (req, res) {
+  console.log("shutdown docker")
   const ownerId = req.body.ownerId;
   const challengeId = req.body.challengeId;
 
@@ -359,8 +386,9 @@ exports.shutdownDocker = async function (req, res) {
 };
 
 exports.getDockers = async function (req, res) {
+  console.log("get dockers")
   const ownerId = req.body.ownerId;
-
+  // console.log(await dockers.find({ ownerId : ownerId }))
   const ownerDockers = (await dockers.find({ ownerId: ownerId })).map(
     (docker) => {
       let copy = { ...docker._doc, id: docker.id };
@@ -378,7 +406,9 @@ exports.getDockers = async function (req, res) {
   res.send({ state: "success", dockers: ownerDockers });
 };
 
+
 exports.getAllDockers = async function (req, res) {
+  console.log('get all dockers')
   const deployedDockers = (
     await dockers
       .find({})

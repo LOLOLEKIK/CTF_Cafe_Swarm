@@ -7,7 +7,7 @@ version: '3.1'
 services:
 
   mongo:
-    image: mongo
+    image: mongo:4.4.18
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: dbuser
@@ -26,19 +26,19 @@ services:
       - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
 
       # Routing
-      - FRONTEND_URI=http://localhost:3000
+      - FRONTEND_URI=http://172.16.3.11:3000
 
       # Mail Verification
       - MAIL_VERIFICATION=false
-      - BACKEND_URI=<backend url same as frontend unless testing locally, will then be port 3001>
+      - BACKEND_URI=http://127.0.0.1:3001
       - HOST=<mail server>
       - MAIL_PORT=<mail server port>
       - MAIL=<mail address to send emails>
       - PASS=<mail password to send emails>
 
       # Docker API
-      - DEPLOYER_API=/var/run/docker.sock
-      - DEPLOYER_SECRET=<deployer secret token>
+      - DEPLOYER_API=http://172.16.3.11:3002
+      - DEPLOYER_SECRET=secret_token_for_hn
 
       # Config 
       - NODE_ENV=development
@@ -48,6 +48,8 @@ services:
       - WEBHOOK=<discord webhook url>
     volumes:
       - ./backEnd/assets:/server/assets
+      - ./backEnd:/server
+
     depends_on:
       - mongo
 
@@ -57,22 +59,28 @@ services:
     ports: 
       - '3000:3000'
     environment:
-      - REACT_APP_BACKEND_URI=http://localhost:3001
-      - REACT_APP_CTF_NAME=TEST_CTF
+      - REACT_APP_BACKEND_URI=http://172.16.3.11:3001
+      - REACT_APP_CTF_NAME=HAXKYNOv
       - GENERATE_SOURCEMAP=false
+
+
 
   dockerapi:
     build: ./dockerAPI
     restart: always
     user: "root"
     environment:
-      - SECRET_TOKEN=s3cret4HackyNovFlagGvhcbezha
-      - BACKEND_URI=http://localhost:3001/
-      - DOCKER_URI=http://localhost:3002/
+      - SECRET_TOKEN=secret_token_for_hn
+      - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
+      - BACKEND_URI=http://172.16.3.11:3001/
+      - DOCKER_URI=172.16.3.11
       - RANDOM_FLAG_FORMAT="HNx03{RAND}"
+      - GITHUB_TOKEN=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
       - INSWARM=true
     volumes:
+      - ./dockerAPI:/server
       - /var/run/docker.sock:/var/run/docker.sock
+
     ports:
       - '3002:3002'
     depends_on:

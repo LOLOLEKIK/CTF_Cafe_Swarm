@@ -86,6 +86,10 @@ var challengeSchema = new Schema({
     requirement: {
         type: String,
         default: ''
+    },
+    maxTry : {
+        type: Number,
+        default: 10
     }
 });
 

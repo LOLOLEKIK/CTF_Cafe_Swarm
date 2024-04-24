@@ -47,6 +47,7 @@ exports.saveChallenge = async function (req, res) {
 
     const validationObject = {
       points: { type: "positiveNumber" },
+      maxTry: { type: "positiveNumber" },
       level: { type: "positiveNumber" },
       firstBloodPoints: { type: "positiveNumber" },
       hints: {
@@ -67,6 +68,7 @@ exports.saveChallenge = async function (req, res) {
     validateRequestBody(req.body, validationObject);
 
     if (!challengeExists) throw Error("Challenge does not exist");
+ 
 
     await challenges.findByIdAndUpdate(req.body.id, {
       hidden: req.body.hidden,
@@ -74,6 +76,7 @@ exports.saveChallenge = async function (req, res) {
       tags: JSON.parse(req.body.tags),
       points: JSON.parse(req.body.points),
       firstBloodPoints: JSON.parse(req.body.firstBloodPoints),
+      maxTry: req.body.maxTry,
       initialPoints: JSON.parse(req.body.points),
       minimumPoints: JSON.parse(req.body.minimumPoints),
       level: JSON.parse(req.body.level),
@@ -588,12 +591,14 @@ exports.getDockers = async function (req, res) {
   let search = req.body.search;
   let page = req.body.page;
 
+
   try {
     if (page <= 0) throw Error("Page cannot be less than 1!");
     let logCount = await log.count();
     if ((page - 1) * 100 > logCount) throw Error("No more pages!");
     if (isNaN(page)) page = 1;
-
+  console.log("here")
+  console.log(process.env.DEPLOYER_SECRET)
     let dockers = (
       await (
         await fetch(`${process.env.DEPLOYER_API}/api/getAllDockers`, {
@@ -601,6 +606,8 @@ exports.getDockers = async function (req, res) {
           headers: {
             "X-API-KEY": process.env.DEPLOYER_SECRET,
             "Content-Type": "application/json",
+            'Accept': 'application/json',
+            
           },
           body: JSON.stringify({
             page: page,
@@ -608,6 +615,8 @@ exports.getDockers = async function (req, res) {
         })
       ).json()
     ).dockers;
+    console.log("after")
+    console.log(dockers)
 
     dockers = await Promise.all(
       dockers.map(async (x) => {

@@ -595,6 +595,21 @@ function ChallengeCard(props) {
                       {challenge.firstBloodPoints}
                     </p>
                   </div>
+                  <div style={{ display: "flex" }}>
+                    <label>Maximum number of attempts:</label>
+                    <p
+                      style={{
+                        backgroundColor: "rgb(30, 32, 55)",
+                        outline: "none",
+                        minWidth: "5%",
+                      }}
+                      contentEditable="true"
+                      suppressContentEditableWarning={true}
+                      id={"maxTry" + challenge._id}
+                    >
+                      {challenge.maxTry}
+                    </p>
+                  </div>
 
                   {props.dynamicScoring.toString() == "true" ? (
                     <div style={{ display: "block" }}>

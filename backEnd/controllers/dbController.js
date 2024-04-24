@@ -70,6 +70,7 @@ exports.resolveTeamsFull = function (match) {
         teamCaptain: { $first: "$teamCaptain" },
         category: { $first: "$category" },
         country: { $first: "$country" },
+        challengeTry: { $first: "$challengeTry" },
       },
     },
     {
@@ -87,6 +88,7 @@ exports.resolveTeamsFull = function (match) {
         name: { $first: "$name" },
         teamCaptain: { $first: "$teamCaptain" },
         country: { $first: "$country" },
+        challengeTry: { $first: "$challengeTry" },
       },
     },
     {
@@ -166,6 +168,7 @@ exports.resolveTeamsFull = function (match) {
         teamCaptain: { $first: "$teamCaptain" },
         category: { $first: "$category" },
         country: { $first: "$country" },
+        challengeTry: { $first: "$challengeTry" },
       },
     },
     {
@@ -185,6 +188,7 @@ exports.resolveTeamsFull = function (match) {
         teamCaptain: { $first: "$teamCaptain" },
         category: { $first: "$category" },
         country: { $first: "$country" },
+        challengeTry: { $first: "$challengeTry" },
       },
     },
   ]);

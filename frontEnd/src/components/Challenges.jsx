@@ -314,6 +314,7 @@ function Challenges(props) {
             globalData.navigate("/", { replace: true });
           } else {
             globalData.alert.error(response.data.message);
+            refreshUser();
           }
         }
       })
@@ -681,6 +682,16 @@ function Challenges(props) {
                                     ? "Hard"
                                     : "Ninja"}
                                 </span> */}
+                              </h6>
+                            </div>
+                            <div style={{ display: "flex" }}>
+                              <h6 className="solvers">
+                                Max try:{" "}
+                                <span className="solver_num">
+                                {globalData?.userData?.team?.challengeTry[challenge._id] || 0}/{challenge.maxTry}
+                                </span>{" "}
+                                &nbsp;
+                                {}
                               </h6>
                             </div>
                             <ReactMarkdown

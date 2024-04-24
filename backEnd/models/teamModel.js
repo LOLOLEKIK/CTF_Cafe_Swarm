@@ -31,6 +31,10 @@ var teamSchema = new Schema({
     country: {
         type: String,
         default: "🌐"
+    },
+    challengeTry: {
+        type: JSON,
+        default: {}
     }
 });
 

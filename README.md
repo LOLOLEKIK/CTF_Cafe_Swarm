@@ -36,6 +36,32 @@ Updates : soon
 
 *docker compose setup is only usable if you wont run any dockerized challenges else use pm2*
 
+# Manual Backend & Frontend Setup ( Dockers swarm )
+
+for use with docker swarm, go to docker-compose and add 
+```
+    environment:
+      - SECRET_TOKEN=<token>
+      - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
+      - BACKEND_URI=http://<backend>:3001/
+      - DOCKER_URI=<ip-of-load-balancer-swarm>
+      - RANDOM_FLAG_FORMAT="HNx03{RAND}"
+      - GITHUB_TOKEN=<github token to access docker-compose in repo>
+      - INSWARM=true
+```
+Then create a credsdocker.json file at the root of dockerAPI so that your container can authenticate itself to your registry and access your private repo.
+```
+{
+        "auths": {
+                "https://index.docker.io/v1/": {
+                        "auth": "<b64creds>"
+                }
+        }
+}
+```
+The swarm is created outside CTFCafé and care must be taken to give your registry access to your master/slave swarm so that the images can be pulled.
+
+
 # Manual Backend & Frontend Setup ( No Dockers )
 
 ## Prerequisites

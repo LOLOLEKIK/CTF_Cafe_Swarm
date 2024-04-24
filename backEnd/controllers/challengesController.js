@@ -36,6 +36,7 @@ exports.getChallenges = async function (req, res) {
         info: 1,
         level: 1,
         solveCount: 1,
+        maxTry: 1,
         file: 1,
         codeSnippet: 1,
         codeLanguage: 1,
@@ -68,7 +69,7 @@ exports.getChallenges = async function (req, res) {
           let copy = { ...challenge._doc, id: challenge.id };
 
           let team = false;
-          let teamHasBought = false;
+
 
           // Check teamId is valid
           if (ObjectId.isValid(user.teamId)) {
@@ -95,13 +96,13 @@ exports.getChallenges = async function (req, res) {
               !user.solved.find((x) =>
                 new ObjectId(x._id).equals(challenge.requirement)
               ) &&
-              teamHasBought == false
+              teamHasUnlocked == false
             ) {
               continue;
             }
           }
-
           copy.hints = challenge.hints.map((hint) => {
+          let teamHasBought = false;
             hintCopy = { ...hint };
             // Check Team Exists
             if (team) {
@@ -402,6 +403,25 @@ exports.submitFlag = async function (req, res) {
 
     let challenge = await challenges.findById(challengeId);
 
+    const team = await teams.findById(user.teamId);
+
+    // Check Team Exists
+    if (!team) throw new Error("Not in a team!");
+
+
+    if (challenge.maxTry < team.challengeTry[challengeId] + 1) {
+      logController.createLog(req, user, {
+        state: "error",
+        message: "Max tries reached!",
+      });
+      throw new Error("Max tries reached!");
+    } else {
+      await teams.updateOne(
+        { _id: user.teamId },
+        { $inc: { [`challengeTry.${challengeId}`]: 1 } }
+      );
+    }
+
     // Check random flag
     if (challenge.randomFlag) {
       if (
@@ -451,10 +471,6 @@ exports.submitFlag = async function (req, res) {
     // Check teamId is valid
     if (!ObjectId.isValid(user.teamId)) throw new Error("Not in a team!");
 
-    const team = await teams.findById(user.teamId);
-
-    // Check Team Exists
-    if (!team) throw new Error("Not in a team!");
 
     // Check if team is currently submitting
     if (currentlySubmittingTeams.includes(user.teamId)) {
@@ -614,6 +630,7 @@ exports.buyHint = async function (req, res) {
 
     const challengeId = data.challengeId;
     const hintId = req.body.hintId;
+    const user = await users.findOne({ _id: req.session.userId, verified: true });
 
     // Check if user is currently submitting flag
     if (currentlyBuyingUsers.includes(req.session.userId))
