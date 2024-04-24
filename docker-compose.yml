@@ -7,7 +7,8 @@ version: '3.1'
 services:
 
   mongo:
-    image: mongo:4.4.18
+    # image: mongo:4.4.18 # only if AVX support is KO
+    image: mongo:latest
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: dbuser
@@ -38,7 +39,7 @@ services:
 
       # Docker API
       - DEPLOYER_API=http://172.16.3.11:3002
-      - DEPLOYER_SECRET=secret_token_for_hn
+      - DEPLOYER_SECRET=<secret_token>
 
       # Config 
       - NODE_ENV=development
@@ -70,12 +71,12 @@ services:
     restart: always
     user: "root"
     environment:
-      - SECRET_TOKEN=secret_token_for_hn
+      - SECRET_TOKEN=<secret_token>
       - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
       - BACKEND_URI=http://172.16.3.11:3001/
       - DOCKER_URI=172.16.3.11
       - RANDOM_FLAG_FORMAT="HNx03{RAND}"
-      - GITHUB_TOKEN=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
+      - GITHUB_TOKEN=<github token>
       - INSWARM=true
     volumes:
       - ./dockerAPI:/server
