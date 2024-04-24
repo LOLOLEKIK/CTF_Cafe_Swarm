@@ -7,8 +7,8 @@ version: '3.1'
 services:
 
   mongo:
-    # image: mongo:4.4.18 # only if AVX support is KO
-    image: mongo:latest
+    image: mongo:4.4.18 # only if AVX support is KO
+    # image: mongo:latest
     restart: always
     environment:
       MONGO_INITDB_ROOT_USERNAME: dbuser
@@ -27,18 +27,18 @@ services:
       - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
 
       # Routing
-      - FRONTEND_URI=http://172.16.3.11:3000
+      - FRONTEND_URI=http://<frontend>:3000
 
       # Mail Verification
       - MAIL_VERIFICATION=false
-      - BACKEND_URI=http://127.0.0.1:3001
+      - BACKEND_URI=http://<backed>:3001
       - HOST=<mail server>
       - MAIL_PORT=<mail server port>
       - MAIL=<mail address to send emails>
       - PASS=<mail password to send emails>
 
       # Docker API
-      - DEPLOYER_API=http://172.16.3.11:3002
+      - DEPLOYER_API=http://<dockerapi>:3002
       - DEPLOYER_SECRET=<secret_token>
 
       # Config 
@@ -49,7 +49,6 @@ services:
       - WEBHOOK=<discord webhook url>
     volumes:
       - ./backEnd/assets:/server/assets
-      - ./backEnd:/server
 
     depends_on:
       - mongo
@@ -60,7 +59,7 @@ services:
     ports: 
       - '3000:3000'
     environment:
-      - REACT_APP_BACKEND_URI=http://172.16.3.11:3001
+      - REACT_APP_BACKEND_URI=http://<backend>:3001
       - REACT_APP_CTF_NAME=HAXKYNOv
       - GENERATE_SOURCEMAP=false
 
@@ -73,13 +72,12 @@ services:
     environment:
       - SECRET_TOKEN=<secret_token>
       - MONGODB_CONNSTRING=mongodb://dbuser:changeme@mongo:27017/ctfDB?authSource=admin
-      - BACKEND_URI=http://172.16.3.11:3001/
-      - DOCKER_URI=172.16.3.11
+      - BACKEND_URI=http://<backend>:3001/
+      - DOCKER_URI=<ip-of-manager>
       - RANDOM_FLAG_FORMAT="HNx03{RAND}"
       - GITHUB_TOKEN=<github token>
       - INSWARM=true
     volumes:
-      - ./dockerAPI:/server
       - /var/run/docker.sock:/var/run/docker.sock
 
     ports:
