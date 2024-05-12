@@ -71,7 +71,9 @@ async function deployDockerSwarm(dockerPath, stackName) {
     console.log('stdout:', stdout);
     console.error('stderr:', stderr);
     if (stderr) {
+      console.error('stderr:', stderr);
       progress.delete(stackName);
+      console.log('progress:', progress);
       throw new Error(stderr);
     }
     // Here, handle the response or errors appropriately
