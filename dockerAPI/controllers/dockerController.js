@@ -70,9 +70,13 @@ async function deployDockerSwarm(dockerPath, stackName) {
     );
     console.log('stdout:', stdout);
     console.error('stderr:', stderr);
-
+    if (stderr) {
+      progress.delete(stackName);
+      throw new Error(stderr);
+    }
     // Here, handle the response or errors appropriately
   } catch (error) {
+    progress.delete(stackName);
     console.error('Error deploying to Docker Swarm:', error);
     throw error;
   }
@@ -111,10 +115,12 @@ async function stopAndRemoveStack(stackName) {
     const { stdout, stderr } = await execAsync(`docker stack rm ${stackName}`);
     console.log('stdout:', stdout);
     if (stderr) {
+      progress.delete(stackName);
       console.error('stderr:', stderr);
       throw new Error(stderr);
     }
   } catch (error) {
+    progress.delete(stackName);
     console.error('Error stopping and removing stack:', error);
     throw error;
   }
@@ -183,6 +189,7 @@ exports.deployDocker = async function (req, res) {
     const dockerPath = await checkDockerExists(req.body.githubUrl).catch(
       (e) => {
         console.log(e);
+        progress.delete(challengeId + "_" + ownerId);
         throw Error("Failed!");
       }
     );
@@ -208,6 +215,7 @@ exports.deployDocker = async function (req, res) {
       // launch docker
       if (process.env.INSWARM == "true") {
         res.send({ state: "error", message: "random flag option not supported with swarm :(" });
+        progress.delete(challengeId + "_" + ownerId);
         return;
       }
       else {
@@ -249,9 +257,6 @@ exports.deployDocker = async function (req, res) {
     let i = 0;
     try {
       let port = "none";
-      console.log("eeee")
-
-      console.log("eeee")
       if (process.env.INSWARM == "true") {
         while(containers[i] && containers[i].ports.length == 0) {
           i += 1;
