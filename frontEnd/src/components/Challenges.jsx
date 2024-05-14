@@ -688,7 +688,7 @@ function Challenges(props) {
                               <h6 className="solvers">
                                 Max try:{" "}
                                 <span className="solver_num">
-                                {globalData?.userData?.team?.challengeTry[challenge._id] || 0}/{challenge.maxTry}
+                                {globalData?.userData?.team?.challengeTry != undefined ? globalData?.userData?.team?.challengeTry[challenge._id] : 0}/{challenge.maxTry}
                                 </span>{" "}
                                 &nbsp;
                                 {}
